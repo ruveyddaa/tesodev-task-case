@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
 	"tesodev-product-api/db"
+	"tesodev-product-api/handlers"
+	"tesodev-product-api/repository"
 	"tesodev-product-api/routes"
 
 	"github.com/labstack/echo/v4"
@@ -12,16 +12,17 @@ import (
 func main() {
 	e := echo.New()
 
-	e.GET("/ping", func(c echo.Context) error {
-		return c.String(http.StatusOK, "pong")
-	})
-
+	// Connect to database
 	db.ConnectDB()
-	routes.ProductRoutes(e)
 
-	for _, r := range e.Routes() {
-		fmt.Printf("%-6s → %s\n", r.Method, r.Path)
-	}
+	// Initialize repository with db instance
+	repo := &repository.ProductRepository{DB: db.DB}
+
+	// Initialize handler with repository
+	handler := &handlers.ProductHandler{Repo: repo}
+
+	// Register routes with handler instance
+	routes.ProductRoutes(e, handler)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

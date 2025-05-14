@@ -12,15 +12,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func GetAllProducts(c echo.Context) error {
-	products, err := repository.GetAllProducts()
+type ProductHandler struct {
+	Repo *repository.ProductRepository
+}
+
+func (h *ProductHandler) GetAllProducts(c echo.Context) error {
+	products, err := h.Repo.GetAllProducts()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Database error"})
 	}
 	return c.JSON(http.StatusOK, products)
 }
 
-func CreateProduct(c echo.Context) error {
+func (h *ProductHandler) CreateProduct(c echo.Context) error {
 	var product models.Product
 
 	if err := c.Bind(&product); err != nil {
@@ -34,7 +38,7 @@ func CreateProduct(c echo.Context) error {
 	product.ID = primitive.NewObjectID()
 	product.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 
-	id, err := repository.CreateProduct(product)
+	id, err := h.Repo.CreateProduct(product)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Database error"})
 	}
@@ -43,14 +47,14 @@ func CreateProduct(c echo.Context) error {
 	return c.JSON(http.StatusCreated, product)
 }
 
-func GetProductByID(c echo.Context) error {
+func (h *ProductHandler) GetProductByID(c echo.Context) error {
 	idParam := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid product ID"})
 	}
 
-	product, err := repository.GetProductByID(objID)
+	product, err := h.Repo.GetProductByID(objID)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, echo.Map{"error": "Product not found"})
 	}
@@ -58,7 +62,7 @@ func GetProductByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, product)
 }
 
-func UpdateProduct(c echo.Context) error {
+func (h *ProductHandler) UpdateProduct(c echo.Context) error {
 	idParam := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
@@ -74,7 +78,7 @@ func UpdateProduct(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Name and price are required"})
 	}
 
-	err = repository.UpdateProduct(objID, updated)
+	err = h.Repo.UpdateProduct(objID, updated)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, echo.Map{"error": "Product not found"})
 	}
@@ -82,7 +86,7 @@ func UpdateProduct(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"message": "Product updated successfully"})
 }
 
-func PatchProduct(c echo.Context) error {
+func (h *ProductHandler) PatchProduct(c echo.Context) error {
 	idParam := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
@@ -100,7 +104,7 @@ func PatchProduct(c echo.Context) error {
 		}
 	}
 
-	err = repository.PatchProduct(objID, updateData)
+	err = h.Repo.PatchProduct(objID, updateData)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, echo.Map{"error": "Product not found"})
 	}
@@ -108,14 +112,14 @@ func PatchProduct(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"message": "Product updated successfully"})
 }
 
-func DeleteProduct(c echo.Context) error {
+func (h *ProductHandler) DeleteProduct(c echo.Context) error {
 	idParam := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid product ID"})
 	}
 
-	err = repository.DeleteProduct(objID)
+	err = h.Repo.DeleteProduct(objID)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, echo.Map{"error": "Product not found"})
 	}
@@ -123,7 +127,7 @@ func DeleteProduct(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"message": "Product deleted successfully"})
 }
 
-func SearchProducts(c echo.Context) error {
+func (h *ProductHandler) SearchProducts(c echo.Context) error {
 	name := c.QueryParam("name")
 	minPriceStr := c.QueryParam("minPrice")
 	maxPriceStr := c.QueryParam("maxPrice")
@@ -145,7 +149,7 @@ func SearchProducts(c echo.Context) error {
 		}
 	}
 
-	products, err := repository.SearchProducts(name, minPrice, maxPrice, sortOrder)
+	products, err := h.Repo.SearchProducts(name, minPrice, maxPrice, sortOrder)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Search failed"})
 	}
