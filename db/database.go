@@ -2,10 +2,11 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -13,20 +14,21 @@ import (
 var DB *mongo.Database
 
 func ConnectDB() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(" Error loading .env file")
+	}
+
+	uri := os.Getenv("MONGO_URI")
+	clientOptions := options.Client().ApplyURI(uri)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	clientOptions := options.Client().ApplyURI("mongodb://root:example@localhost:27017")
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Fatalf("MongoDB bağlantı hatası: %v", err)
+		log.Fatal("MongoDB bağlantı hatası:", err)
 	}
-
-	if err := client.Ping(ctx, nil); err != nil {
-		log.Fatalf("MongoDB erişilemiyor: %v", err)
-	}
-
-	fmt.Println("✅ MongoDB bağlantısı başarılı!")
 
 	DB = client.Database("tesodevdb")
 }
