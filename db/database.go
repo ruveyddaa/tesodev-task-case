@@ -27,7 +27,7 @@ func ConnectDB() {
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Fatal("MongoDB bağlantı hatası:", err)
+		log.Fatal("Mongodb connect error:", err)
 	}
 
 	DB = client.Database("tesodevdb")
